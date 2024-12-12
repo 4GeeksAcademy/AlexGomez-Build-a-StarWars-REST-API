@@ -78,21 +78,21 @@ class Vehiculo(db.Model):
             "asientos": self.asientos,
         }
 
-class Favorito(db.Model):
+class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= True)
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=True)
     people_id = db.Column(db.Integer, db.ForeignKey('people.id'), nullable=True)
     vehiculo_id = db.Column(db.Integer, db.ForeignKey('vehiculo.id'), nullable=True)
 
-    user = db.relationship('User', backref='favoritos', lazy=True)
-    planet = db.relationship('Planet', backref='favoritos', lazy=True)
-    people = db.relationship('People', backref='favoritos', lazy=True)
-    vehiculo = db.relationship('Vehiculo', backref='favoritos', lazy=True)
+    user = db.relationship('User', backref='favorites', lazy=True)
+    planet = db.relationship('Planet', backref='favorites', lazy=True)
+    people = db.relationship('People', backref='favorites', lazy=True)
+    vehiculo = db.relationship('Vehiculo', backref='favorites', lazy=True)
 
     def __repr__(self):
-        return f'<Favorito {self.id}>'
+        return f'<favorite {self.id}>'
 
     def serialize(self):
         return {

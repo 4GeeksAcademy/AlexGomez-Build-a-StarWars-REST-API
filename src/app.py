@@ -8,7 +8,7 @@ from flask_swagger import swagger # type: ignore
 from flask_cors import CORS # type: ignore
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User,Planet,People,Vehiculo,Favorito  # type: ignore
+from models import db, User,Planet,People,Vehiculo,Favorite  # type: ignore
 #from models import Person
 
 app = Flask(__name__)
@@ -25,16 +25,10 @@ MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
 setup_admin(app)
-
-# Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-
-
-
-# generate sitemap with all your endpoints
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
@@ -109,7 +103,7 @@ def delete_user(id):
 @app.route('/users/favorites', methods=['GET'])
 def get_favorites():
     try:
-        fav = Favorito.query.all()
+        fav = Favorite.query.all()
         if len(fav) <1:
             return jsonify({"msg": "No favorites found"}), 404
         s_fav = list(map(lambda x: x.serialize(), fav))
@@ -117,7 +111,16 @@ def get_favorites():
     except Exception as e:
         return str(e), 500
 
-
+@app.route('/users/<int:id>/favorite', methods=['GET'])
+def get_one_favorite(id):
+     try:
+         favorite = Favorite.query.filter_by(id = id).all()
+         if favorite is None:
+             return jsonify({"msg": f"favorite {id} not found"}), 404
+         serialized_favorites=list(map(lambda x: x.serialize(),favorite))
+         return serialized_favorites, 200
+     except Exception as e:
+         return str(e), 500
 
 
 
@@ -187,12 +190,11 @@ def delete_planet(id):
     except Exception as e:
         return str(e), 500
 
-# [POST] /favorite/planet/<int:planet_id> Añade un nuevo planet favorito al usuario actual con el id = planet_id.
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
 def add_favorite_planet(planet_id):
     try:
         body = json.loads(request.data)
-        fav = Favorito(
+        fav = Favorite(
             user_id=body["user_id"],
             planet_id=planet_id
         )
@@ -203,11 +205,10 @@ def add_favorite_planet(planet_id):
     except Exception as e:
         return str(e), 500
 
-# [DELETE] /favorite/planet/<int:planet_id> Elimina un planet favorito con el id = planet_id
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 def delete_favorite_planet(planet_id):
     try:
-        fav = Favorito.query.filter_by(planet_id=planet_id).first()
+        fav = Favorite.query.filter_by(planet_id=planet_id).first()
         if fav is None:
             return jsonify({"msg": f"Favorite planet {planet_id} not found"}), 404
         db.session.delete(fav)
@@ -216,7 +217,6 @@ def delete_favorite_planet(planet_id):
     except Exception as e:
         return str(e), 500
     
-
 
 @app.route('/people', methods=['GET'])
 def get_people():
@@ -293,7 +293,7 @@ def delete_people(id):
 def add_favorite_people(people_id):
     try:
         body = json.loads(request.data)
-        fav = Favorito(
+        fav = Favorite(
             user_id=body["user_id"],
             people_id=people_id
         )
@@ -307,7 +307,7 @@ def add_favorite_people(people_id):
 @app.route('/favorite/people/<int:people_id>', methods=['DELETE'])
 def delete_favorite_people(people_id):
     try:
-        fav = Favorito.query.filter_by(people_id=people_id).first()
+        fav = Favorite.query.filter_by(people_id=people_id).first()
         if fav is None:
             return jsonify({"msg": f"Favorite people {people_id} not found"}), 404
         db.session.delete(fav)
@@ -316,8 +316,6 @@ def delete_favorite_people(people_id):
     except Exception as e:
         return str(e), 500
     
-
-
 
 @app.route('/vehiculo', methods=['GET'])
 def get_vehiculo():
@@ -394,7 +392,7 @@ def delete_vehiculo(id):
 def add_favorite_vehiculo(vehiculo_id):
     try:
         body = json.loads(request.data)
-        fav = Favorito(
+        fav = Favorite(
             user_id=body["user_id"],
             vehiculo_id=vehiculo_id
         )
@@ -408,7 +406,7 @@ def add_favorite_vehiculo(vehiculo_id):
 @app.route('/favorite/vehiculo/<int:vehiculo_id>', methods=['DELETE'])
 def delete_favorite_vehiculo(vehiculo_id):
     try:
-        fav = Favorito.query.filter_by(vehiculo_id=vehiculo_id).first()
+        fav = Favorite.query.filter_by(vehiculo_id=vehiculo_id).first()
         if fav is None:
             return jsonify({"msg": f"Favorite vehiculo {vehiculo_id} not found"}), 404
         db.session.delete(fav)
@@ -419,26 +417,28 @@ def delete_favorite_vehiculo(vehiculo_id):
     
 
 
-@app.route('/favorito', methods=['GET'])
-def get_favorito():
+@app.route('/favorite', methods=['GET'])
+def get_favorite():
     try:
-        favorito = Favorito.query.all()
-        if len(favorito) <1:
-            return jsonify({"msg": "No favorito found"}), 404
-        s_favorito = list(map(lambda x: x.serialize(), favorito))
-        return jsonify(s_favorito), 200
+        favorite = Favorite.query.all()
+        if len(favorite) <1:
+            return jsonify({"msg": "No favorite found"}), 404
+        s_favorite = list(map(lambda x: x.serialize(), favorite))
+        return jsonify(s_favorite), 200
     except Exception as e:
-        return str(e), 500
+        return str(e), 501
 
-@app.route('/favorito/<int:id>', methods=['Delete'])
-def delete_favorito(id):
+
+
+@app.route('/favorite/<int:id>', methods=['Delete'])
+def delete_favorite(id):
     try:
-        favorito = Favorito.query.get(id)
-        if favorito is None:
-            return jsonify({"msg": f"Favorito {id} not found"}), 404
-        db.session.delete(favorito)
+        favorite = Favorite.query.get(id)
+        if favorite is None:
+            return jsonify({"msg": f"favorite {id} not found"}), 404
+        db.session.delete(favorite)
         db.session.commit()
-        return jsonify({"msg": f"Favorito {id} deleted"}), 200
+        return jsonify({"msg": f"favorite {id} deleted"}), 200
     except Exception as e:
         return str(e), 500
 
